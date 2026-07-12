@@ -1,0 +1,20 @@
+Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Werkzeug==3.0.3
+PyYAML==6.0.1
+
+# RAG / LLM stack (same as the original Streamlit app)
+langchain==0.2.16
+langchain-community==0.2.16
+langchain-openai==0.1.23
+langchain-text-splitters==0.2.4
+faiss-cpu==1.8.0.post1
+PyMuPDF==1.24.9
+sentence-transformers==3.0.1
+
+# Tools: web search (Tavily) + hate speech analyzer
+tavily-python==0.5.0
+pandas==2.2.2
+scikit-learn==1.5.1
+numpy==1.26.4
