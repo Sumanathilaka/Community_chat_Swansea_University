@@ -1,6 +1,6 @@
-# Mino-Chat (Flask)
+# Community-Chat (Flask)
 
-A Flask port of the original Streamlit `Mino-chat.py` RAG assistant, with a
+A Flask port of RAG assistant, with a
 ChatGPT-style UI, optional login, and opt-in chat saving.
 
 ## Features
@@ -163,3 +163,8 @@ on each `POST /api/chat`.
 | POST   | `/api/auth/login`        | Log in                                    |
 | POST   | `/api/auth/logout`       | Log out (login required)                  |
 | GET    | `/api/auth/me`           | Current user, if any                      |
+
+
+## Contact Details
+Deshan Sumanathilaka
+Supervision: Dr Nicholas Micallef
