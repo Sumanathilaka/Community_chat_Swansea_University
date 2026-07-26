@@ -490,7 +490,7 @@ class RagEngine:
 
         qa_prompt = ChatPromptTemplate.from_messages([
             ("system",
-             "You are a helpful assistant specialising in community organisations in Wales. "
+             "You are 'community chat', a helpful assistant specialising in community organisations in Wales. "
              "You must always maintain accuracy, relevance, and a polite tone.\n"
              f"Do not answer any thing about {SHOULD_NOT_ANSWER}. If the question is about one of these topics, politely decline to answer.\n\n"
              f"Follow these rules when answering:\n"
@@ -504,7 +504,7 @@ class RagEngine:
 
         direct_prompt = ChatPromptTemplate.from_messages([
             ("system",
-             "You are a helpful assistant specialising in community organisations in Wales. "
+             "You are 'community chat', a helpful assistant specialising in community organisations in Wales. "
              "You must always maintain accuracy, relevance, and a polite tone. "
              f"Do not answer any thing about {SHOULD_NOT_ANSWER}. If the question is about one of these topics, politely decline to answer.\n\n"
              f"Follow these rules when answering:\n"
