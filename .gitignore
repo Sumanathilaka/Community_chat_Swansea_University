@@ -5,5 +5,6 @@ instance/
 vectorstore/*/
 tmp_uploads/*
 !tmp_uploads/.gitkeep
+pdfs/*/
 .venv/
 venv/
