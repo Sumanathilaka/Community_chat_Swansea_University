@@ -20,11 +20,10 @@ import fitz  # PyMuPDF
 
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_community.tools.tavily_search import TavilySearchResults
 
-from langchain_openai import AzureChatOpenAI
+from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableWithMessageHistory, RunnablePassthrough
@@ -182,10 +181,11 @@ class RagEngine:
             max_tokens=800,
         )
 
-        self.embedding_llm = HuggingFaceBgeEmbeddings(
-            model_name="BAAI/bge-small-en",
-            model_kwargs={"device": "cpu"},
-            encode_kwargs={"normalize_embeddings": True},
+        self.embedding_llm = AzureOpenAIEmbeddings(
+            azure_endpoint=app_config["AZURE_OPENAI_ENDPOINT"],
+            azure_deployment=app_config["AZURE_OPENAI_EMBEDDING_DEPLOYMENT"],
+            api_version=app_config["AZURE_OPENAI_API_VERSION"],
+            api_key=app_config["AZURE_OPENAI_API_KEY"],
         )
 
         self.tavily_api_key = app_config.get("TAVILY_API_KEY")
@@ -443,7 +443,7 @@ class RagEngine:
 
         clarification_prompt = ChatPromptTemplate.from_messages([
             ("system",
-             "Analyze the chat history and the latest user question to determine if the question is clear enough to search a knowledge base.\n\n"
+             "You are 'community chat', a helpful assistant specialising in community organisations in Wales specially for CIWA : Chinese in Wales Association and RCC : Race council Cymru. Analyze the chat history and the latest user question to determine if the question is clear enough to search a knowledge base.\n\n"
              "If the question is about application services, anything about the personas, or any of the knowledge base sections, set needs_clarification to false and provide a rewritten question that is optimized for search.\n\n"
              f"If the query is about the {SHOULD_NOT_ANSWER_SUMMARY} topics, set needs_clarification to false and provide a rewritten question that politely declines to answer.\n\n"
              "Respond strictly with this JSON structure:\n"
@@ -452,7 +452,7 @@ class RagEngine:
              '  "rewritten_question": "Standalone, decontextualized query optimized for search. Search always performed on English. Empty string if needs_clarification is true.",\n'
              '  "clarification_message": "Polite follow-up question if needs_clarification is true. Empty string if false."\n'
              "}}\n\n"
-             "- Set needs_clarification to true only if the query is structurally ambiguous or missing key entities.\n"
+             "- Set needs_clarification to true only if the query is structurally ambiguous or missing key entities to answer Specially about organization information and time related facts.\n"
              "- If you have already asked for clarification in the chat history, do not ask again; instead, set needs_clarification to false and provide a rewritten question.\n"
              "- Never include markdown, explanation, or text outside the JSON."),
             MessagesPlaceholder(variable_name="chat_history"),

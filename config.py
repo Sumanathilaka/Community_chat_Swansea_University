@@ -28,6 +28,9 @@ class Config:
     AZURE_OPENAI_ENDPOINT = cred("AZURE_OPENAI_ENDPOINT")
     AZURE_OPENAI_DEPLOYMENT = cred("AZURE_OPENAI_DEPLOYMENT", "gpt-4.1-mini")
     AZURE_OPENAI_API_VERSION = cred("AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
+    AZURE_OPENAI_EMBEDDING_DEPLOYMENT = cred("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", "text-embedding-3-small")
+    
+
 
     # RAG paths
     DATA_PATH = os.path.join(BASE_DIR, "pdfs")

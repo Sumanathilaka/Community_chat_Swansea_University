@@ -5,8 +5,10 @@ Werkzeug==3.0.3
 PyYAML==6.0.1
 
 # RAG / LLM stack (same as the original Streamlit app)
---extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.3.1+cpu
+# --extra-index-url https://download.pytorch.org/whl/cpu
+# torch==2.3.1+cpu
+# sentence-transformers==3.0.1
+
 
 langchain==0.2.16
 langchain-community==0.2.16
@@ -14,7 +16,7 @@ langchain-openai==0.1.23
 langchain-text-splitters==0.2.4
 faiss-cpu==1.13.2
 PyMuPDF==1.24.9
-sentence-transformers==3.0.1
+
 
 # Tools: web search (Tavily) + hate speech analyzer
 tavily-python==0.5.0
