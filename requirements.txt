@@ -5,6 +5,9 @@ Werkzeug==3.0.3
 PyYAML==6.0.1
 
 # RAG / LLM stack (same as the original Streamlit app)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.3.1+cpu
+
 langchain==0.2.16
 langchain-community==0.2.16
 langchain-openai==0.1.23

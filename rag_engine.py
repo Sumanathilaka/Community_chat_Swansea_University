@@ -57,7 +57,7 @@ SHOULD_NOT_ANSWER_SUMMARY = """
 
 BASE_SECTION_DESCRIPTIONS = {
     "CIWA": "Chinese in Wales Association — activities, events, community support, membership, cultural programmes.",
-    "RCC": "Race Council Cymru — race equality policy, advocacy, community engagement, Welsh race relations.",
+    "RCC": "Race Council Cymru - activities, events, community support, race equality policy, advocacy, community engagement, Welsh race relations.",
     "GENERAL": "General anti-racism information, Online Safety Act, hate crime legislation, anti-racism frameworks, Equality data, statistics, demographics, anti-racism metrics, diversity reports.",
     "DATA": "Glossary of data terms and definitions, Social media Platform terms and conditions, political and cultural corpus",
     "PERSONA": "Information about the community personas, its purpose, capabilities, and limitations. Use it when different perspectives, communities are needed for answering questions.",
@@ -449,7 +449,7 @@ class RagEngine:
              "Respond strictly with this JSON structure:\n"
              "{{\n"
              '  "needs_clarification": true|false,\n'
-             '  "rewritten_question": "Standalone, decontextualized query optimized for search. Empty string if needs_clarification is true.",\n'
+             '  "rewritten_question": "Standalone, decontextualized query optimized for search. Search always performed on English. Empty string if needs_clarification is true.",\n'
              '  "clarification_message": "Polite follow-up question if needs_clarification is true. Empty string if false."\n'
              "}}\n\n"
              "- Set needs_clarification to true only if the query is structurally ambiguous or missing key entities.\n"
@@ -491,7 +491,7 @@ class RagEngine:
         qa_prompt = ChatPromptTemplate.from_messages([
             ("system",
              "You are 'community chat', a helpful assistant specialising in community organisations in Wales. "
-             "You must always maintain accuracy, relevance, and a polite tone.\n"
+             "You must always maintain accuracy, relevance, and a polite tone. Always reply in the same language where the question was asked.\n"
              f"Do not answer any thing about {SHOULD_NOT_ANSWER}. If the question is about one of these topics, politely decline to answer.\n\n"
              f"Follow these rules when answering:\n"
              f"{OUTPUT_RESPONSE_INSTRUCTIONS}"
@@ -505,7 +505,7 @@ class RagEngine:
         direct_prompt = ChatPromptTemplate.from_messages([
             ("system",
              "You are 'community chat', a helpful assistant specialising in community organisations in Wales. "
-             "You must always maintain accuracy, relevance, and a polite tone. "
+             "You must always maintain accuracy, relevance, and a polite tone. Always reply in the same language where the question was asked."
              f"Do not answer any thing about {SHOULD_NOT_ANSWER}. If the question is about one of these topics, politely decline to answer.\n\n"
              f"Follow these rules when answering:\n"
              f"{OUTPUT_RESPONSE_INSTRUCTIONS}"

@@ -91,8 +91,8 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    # app.run(debug=True, use_reloader=False, host="0.0.0.0", port=5000)
-    port = int(os.environ.get("PORT", 8000))
-    print(f"Annotation server running locally on http://localhost:{port}/")
+    app.run(debug=True, use_reloader=False, host="0.0.0.0", port=5000)
+    # port = int(os.environ.get("PORT", 8000))
+    # print(f"Annotation server running locally on http://localhost:{port}/")
     
-    app.run(host="0.0.0.0", port=port, debug=True)
+    # app.run(host="0.0.0.0", port=port, debug=True)
