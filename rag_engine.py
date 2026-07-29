@@ -70,27 +70,131 @@ OUTPUT_RESPONSE_INSTRUCTIONS = """
 
 """
 
+# class HateSpeechICL:
+#     """
+#     Hate Speech ICL Classifier — uses labeled vignettes (race/ethnicity,
+#     religion/belief, national origin, ...) as retrieval-based few-shot
+#     exemplars for LLM hate speech detection (explicit + implicit).
+
+#     Heavy dependencies (pandas, numpy, sentence-transformers, scikit-learn)
+#     are imported lazily inside __init__ so that a missing dependency only
+#     disables this one "Analyzer" tool rather than the whole RAG engine.
+#     """
+
+#     def __init__(self, csv_paths, embed_model="all-MiniLM-L6-v2"):
+#         import pandas as pd
+#         from sentence_transformers import SentenceTransformer
+
+#         dfs = [pd.read_csv(p) for p in csv_paths]
+#         self.df = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
+#         self.embedder = SentenceTransformer(embed_model)
+#         self.embeddings = self.embedder.encode(
+#             self.df["text"].tolist(), normalize_embeddings=True
+#         )
+
+#     def retrieve_shots(self, query, k=6, force_diversity=True):
+#         """Retrieve top-k semantically similar vignettes; guarantee
+#         at least one explicit and one implicit example are included."""
+#         import numpy as np
+#         from sklearn.metrics.pairwise import cosine_similarity
+
+#         q_emb = self.embedder.encode([query], normalize_embeddings=True)
+#         sims = cosine_similarity(q_emb, self.embeddings)[0]
+#         ranked_idx = np.argsort(-sims)
+
+#         shots = []
+#         seen_types = set()
+#         for idx in ranked_idx:
+#             row = self.df.iloc[idx]
+#             if len(shots) >= k:
+#                 break
+#             if force_diversity and len(shots) >= k - 2:
+#                 if row["implicit_explicit"] not in seen_types and len(seen_types) < 2:
+#                     shots.append(row)
+#                     seen_types.add(row["implicit_explicit"])
+#                 continue
+#             shots.append(row)
+#             seen_types.add(row["implicit_explicit"])
+
+#         if len(shots) < k:
+#             existing_texts = [s["text"] for s in shots]
+#             for idx in ranked_idx:
+#                 row = self.df.iloc[idx]
+#                 if row["text"] not in existing_texts:
+#                     shots.append(row)
+#                 if len(shots) >= k:
+#                     break
+#         return shots
+
+#     def build_prompt(self, query_text, k=6):
+#         shots = self.retrieve_shots(query_text, k=k)
+
+#         instructions = (
+#             "You are a hate speech annotation expert. Classify the INPUT "
+#             "text using the same schema as the EXAMPLES below.\n"
+#             "Fields to output (JSON):\n"
+#             "- is_hate_speech: true/false\n"
+#             "- severity_tier: one of [none, low, moderate, high, extreme]\n"
+#             "- implicit_explicit: one of [explicit, implicit, none]\n"
+#             "- strategy: e.g. dehumanisation, direct_threat, insult_based, "
+#             "slur_heavy, coded_implicit, general_toxic, low_signal, none\n"
+#             "- target_group: group targeted, or 'none'\n"
+#             "- rationale: one sentence explaining the cue(s) used, "
+#             "especially if the hate is implicit/coded rather than a slur.\n\n"
+#             "Pay special attention to IMPLICIT hate: coded language, "
+#             "dehumanising comparisons, dog-whistles, and stereotypes without "
+#             "explicit slurs are still hate speech.\n\nEXAMPLES:\n"
+#         )
+
+#         example_block = ""
+#         for s in shots:
+#             example_block += (
+#                 f"Text: {s['text']}\n"
+#                 f"Label: {{\"is_hate_speech\": true, "
+#                 f"\"severity_tier\": \"{s['severity_tier']}\", "
+#                 f"\"implicit_explicit\": \"{s['implicit_explicit']}\", "
+#                 f"\"strategy\": \"{s['strategy']}\", "
+#                 f"\"target_group\": \"{s['target_group']}\"}}\n\n"
+#             )
+
+#         return instructions + example_block + f"Now classify this INPUT:\nText: {query_text}\nLabel:"
+
 class HateSpeechICL:
     """
     Hate Speech ICL Classifier — uses labeled vignettes (race/ethnicity,
     religion/belief, national origin, ...) as retrieval-based few-shot
     exemplars for LLM hate speech detection (explicit + implicit).
 
-    Heavy dependencies (pandas, numpy, sentence-transformers, scikit-learn)
+    Heavy dependencies (pandas, numpy, langchain_openai, scikit-learn)
     are imported lazily inside __init__ so that a missing dependency only
     disables this one "Analyzer" tool rather than the whole RAG engine.
     """
 
-    def __init__(self, csv_paths, embed_model="all-MiniLM-L6-v2"):
+    def __init__(self, csv_paths, app_config, embed_model=None):
         import pandas as pd
-        from sentence_transformers import SentenceTransformer
+        import numpy as np
+        
 
         dfs = [pd.read_csv(p) for p in csv_paths]
         self.df = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
-        self.embedder = SentenceTransformer(embed_model)
-        self.embeddings = self.embedder.encode(
-            self.df["text"].tolist(), normalize_embeddings=True
+
+        # Azure OpenAI embedding client
+        self.embedder = AzureOpenAIEmbeddings(
+            azure_endpoint=app_config["AZURE_OPENAI_ENDPOINT"],
+            azure_deployment=app_config["AZURE_OPENAI_EMBEDDING_DEPLOYMENT"],
+            api_version=app_config["AZURE_OPENAI_API_VERSION"],
+            api_key=app_config["AZURE_OPENAI_API_KEY"],
         )
+
+        raw_embeddings = self.embedder.embed_documents(self.df["text"].tolist())
+        self.embeddings = self._normalize(np.array(raw_embeddings, dtype="float32"))
+
+    @staticmethod
+    def _normalize(mat):
+        import numpy as np
+        norms = np.linalg.norm(mat, axis=1, keepdims=True)
+        norms[norms == 0] = 1e-10
+        return mat / norms
 
     def retrieve_shots(self, query, k=6, force_diversity=True):
         """Retrieve top-k semantically similar vignettes; guarantee
@@ -98,7 +202,9 @@ class HateSpeechICL:
         import numpy as np
         from sklearn.metrics.pairwise import cosine_similarity
 
-        q_emb = self.embedder.encode([query], normalize_embeddings=True)
+        q_emb = np.array(self.embedder.embed_query(query), dtype="float32").reshape(1, -1)
+        q_emb = self._normalize(q_emb)
+
         sims = cosine_similarity(q_emb, self.embeddings)[0]
         ranked_idx = np.argsort(-sims)
 
@@ -333,7 +439,7 @@ class RagEngine:
         if not csv_paths:
             return None
         try:
-            return HateSpeechICL(csv_paths)
+            return HateSpeechICL(csv_paths,app_config)
         except Exception as exc:  # missing pandas/sentence-transformers/sklearn, bad CSV, etc.
             print(f"[rag_engine] Hate speech analyzer disabled: {exc}")
             return None
